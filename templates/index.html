@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skincare Inventory</title>
+    <style>
+        /* Simple styles for alert messages */
+        .success { color: green; }
+        .warning { color: orange; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Skincare Product Inventory</h1>
+
+    <!-- Show flash messages for alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Inventory table -->
+    <table border="1" cellpadding="10" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product, data in inventory.items() %}
+            <tr>
+                <td>{{ product }}</td>
+                <td>{{ data.stock }}</td>
+                <td>
+                    {% if data.stock > 0 %}
+                    <a href="{{ url_for('purchase', product=product) }}">Purchase 1</a>
+                    {% else %}
+                    Out of stock
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('show_log') }}">View Purchase Log</a></p>
+</body>
+</html>
