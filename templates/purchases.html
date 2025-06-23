@@ -1,0 +1,280 @@
+<!-- templates/purchases.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Purchases{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('add_purchase') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Record Purchase
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if purchases.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Supplier</th>
+                        <th>Quantity</th>
+                        <th>Cost/Unit</th>
+                        <th>Total Cost</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases.items %}
+                    <tr>
+                        <td>{{ purchase.purchase_date.strftime('%m/%d/%Y') }}</td>
+                        <td>
+                            <strong>{{ purchase.product.name }}</strong><br>
+                            <small class="text-muted">{{ purchase.product.brand }}</small>
+                        </td>
+                        <td>{{ purchase.supplier }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ purchase.quantity }}</span>
+                        </td>
+                        <td>${{ "%.2f"|format(purchase.cost_per_unit) }}</td>
+                        <td>
+                            <strong>${{ "%.2f"|format(purchase.total_cost) }}</strong>
+                        </td>
+                        <td>
+                            {% if purchase.notes %}
+                                <small>{{ purchase.notes[:50] }}{% if purchase.notes|length > 50 %}...{% endif %}</small>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if purchases.pages > 1 %}
+        <nav aria-label="Purchase pagination">
+            <ul class="pagination justify-content-center">
+                {% if purchases.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('purchases', page=purchases.prev_num) }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in purchases.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != purchases.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('purchases', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if purchases.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('purchases', page=purchases.next_num) }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+            <h5>No purchases recorded</h5>
+            <p>Start tracking your inventory purchases.</p>
+            <a href="{{ url_for('add_purchase') }}" class="btn btn-primary">Record First Purchase</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+<!-- templates/add_purchase.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Record Purchase{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Record New Purchase</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="product_id" class="form-label">Product *</label>
+                                <select class="form-select" id="product_id" name="product_id" required>
+                                    <option value="">Select Product</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }} - {{ product.brand }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="supplier" class="form-label">Supplier *</label>
+                                <input type="text" class="form-control" id="supplier" name="supplier" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity *</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="cost_per_unit" class="form-label">Cost per Unit ($) *</label>
+                                <input type="number" step="0.01" class="form-control" id="cost_per_unit" name="cost_per_unit" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="total_cost" class="form-label">Total Cost ($)</label>
+                                <input type="text" class="form-control" id="total_cost" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="purchase_date" class="form-label">Purchase Date *</label>
+                                <input type="date" class="form-control" id="purchase_date" name="purchase_date" value="{{ date.today() }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes about this purchase"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('purchases') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Record Purchase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Calculate total cost automatically
+document.getElementById('quantity').addEventListener('input', calculateTotal);
+document.getElementById('cost_per_unit').addEventListener('input', calculateTotal);
+
+function calculateTotal() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const costPerUnit = parseFloat(document.getElementById('cost_per_unit').value) || 0;
+    const total = quantity * costPerUnit;
+    document.getElementById('total_cost').value = total.toFixed(2);
+}
+</script>
+{% endblock %}
+
+<!-- templates/low_stock.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Low Stock Alerts{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            Products Requiring Attention
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Current Stock</th>
+                        <th>Min Level</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{% if product.current_stock == 0 %}table-danger{% else %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                        </td>
+                        <td>{{ product.brand }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ product.category }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if product.current_stock == 0 %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ product.current_stock }}
+                            </span>
+                        </td>
+                        <td>{{ product.min_stock_level }}</td>
+                        <td>
+                            {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('add_purchase') }}?product_id={{ product.id }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-shopping-cart"></i> Restock
+                                </a>
+                                <a href="{{ url_for('edit_product', id=product.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+            <h5>All Products Well Stocked!</h5>
+            <p>No products are currently below their minimum stock levels.</p>
+            <a href="{{ url_for('products') }}" class="btn btn-outline-primary">View All Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

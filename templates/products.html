@@ -1,0 +1,311 @@
+<!-- templates/products.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Products{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('add_product') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add Product
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Search products or brands..." value="{{ current_search }}">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category }}" {% if category == current_category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="{{ url_for('products') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Value</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{% if product.current_stock == 0 %}table-danger{% elif product.is_low_stock %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                        </td>
+                        <td>{{ product.brand }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ product.category }}</span>
+                        </td>
+                        <td>${{ "%.2f"|format(product.price) }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">{{ product.current_stock }}</span>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#adjustStockModal{{ product.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif product.is_low_stock %}
+                                <span class="badge bg-warning">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>${{ "%.2f"|format(product.total_value) }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_product', id=product.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Stock Adjustment Modal -->
+                    <div class="modal fade" id="adjustStockModal{{ product.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Adjust Stock - {{ product.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('adjust_stock', id=product.id) }}">
+                                    <div class="modal-body">
+                                        <p>Current Stock: <strong>{{ product.current_stock }}</strong></p>
+                                        <div class="mb-3">
+                                            <label for="adjustment{{ product.id }}" class="form-label">Adjustment (+ to add, - to remove)</label>
+                                            <input type="number" class="form-control" id="adjustment{{ product.id }}" name="adjustment" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="reason{{ product.id }}" class="form-label">Reason</label>
+                                            <input type="text" class="form-control" id="reason{{ product.id }}" name="reason" placeholder="e.g., Damaged items, Found extra stock">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Adjust Stock</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Product</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
+                                    <p class="text-muted">This action cannot be undone.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h5>No products found</h5>
+            <p>Try adjusting your search or add a new product.</p>
+            <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add First Product</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+<!-- templates/add_product.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Add Product{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add New Product</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="brand" class="form-label">Brand *</label>
+                                <input type="text" class="form-control" id="brand" name="brand" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Cleansers">Cleansers</option>
+                                    <option value="Moisturizers">Moisturizers</option>
+                                    <option value="Serums">Serums</option>
+                                    <option value="Treatments">Treatments</option>
+                                    <option value="Sunscreens">Sunscreens</option>
+                                    <option value="Toners">Toners</option>
+                                    <option value="Masks">Masks</option>
+                                    <option value="Exfoliants">Exfoliants</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price ($) *</label>
+                                <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_stock" class="form-label">Initial Stock *</label>
+                                <input type="number" class="form-control" id="current_stock" name="current_stock" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="min_stock_level" class="form-label">Minimum Stock Level *</label>
+                                <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" value="5" required>
+                                <div class="form-text">Alert when stock reaches this level</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('products') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- templates/edit_product.html -->
+{% extends "base.html" %}
+
+{% block page_title %}Edit Product{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Product</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="brand" class="form-label">Brand *</label>
+                                <input type="text" class="form-control" id="brand" name="brand" value="{{ product.brand }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Cleansers" {% if product.category == 'Cleansers' %}selected{% endif %}>Cleansers</option>
+                                    <option value="Moisturizers" {% if product.category == 'Moisturizers' %}selected{% endif %}>Moisturizers</option>
+                                    <option value="Serums" {% if product.category == 'Serums' %}selected{% endif %}>Serums</option>
+                                    <option value="Treatments" {% if product.category == 'Treatments' %}selected{% endif %}>Treatments</option>
+                                    <option value="Sunscreens" {% if product.category == 'Sunscreens' %}selected{% endif %}>Sunscreens</option>
+                                    <option value="Toners" {% if product.category == 'Toners' %}selected{% endif %}>Toners</option>
+                                    <option value="Masks" {% if product.category == 'Masks' %}selected{% endif %}>Masks</option>
+                                    <option value="Exfoliants" {% if product.category == 'Exfoliants' %}selected{% endif %}>Exfoliants</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price ($) *</label>
+                                <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ product.price }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_stock" class="form-label">Current Stock *</label>
+                                <input type="number" class="form-control" id="current_stock" name="current_stock" value="{{ product.current_stock }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="min_stock_level" class="form-label">Minimum Stock Level *</label>
+                                <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" value="{{ product.min_stock_level }}" required>
+                                <div class="form-text">Alert when stock reaches this level</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('products') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,32 +1,43 @@
 # skincare-inventory-web
 
-# Skincare Inventory Tracker
+# Skincare Inventory Web App
 
-This is a simple web app built with Python and Flask that helps track skincare product inventory and purchases.
+## Overview
+
+This is a full-featured skincare inventory web application designed for salons to manage products, track purchases, and monitor stock levels efficiently.
 
 ---
 
-## What It Does
+## Features
 
-- Shows current stock of skincare products  
-- Lets users "purchase" products (reducing stock by 1 each time)  
-- Logs each purchase with a timestamp  
-- Shows a purchase history page with all purchases  
-- Warns when product stock is low (3 or fewer items left)  
+- **User Authentication**: Secure login/register for staff and admins  
+- **Product Management**: Add, edit, delete skincare products  
+- **Inventory Tracking**: Real-time stock updates and purchase logging  
+- **Stock Alerts**: Email notifications for low inventory  
+- **Admin Dashboard**: Visualize stock levels and sales trends  
+- **REST API**: JSON endpoints for integration  
+- **Responsive UI**: Built with Bootstrap for desktop and mobile
 
 ---
 
 ## Technologies Used
 
-- **Python**: Programming language powering the app  
-- **Flask**: Lightweight web framework to build the website  
-- **HTML & Jinja2**: For displaying pages and data dynamically  
+| Technology      | Purpose                                 |
+|-----------------|-----------------------------------------|
+| Python          | Backend logic                          |
+| Flask           | Web framework                         |
+| SQLAlchemy      | ORM for database interactions         |
+| Flask-Login     | User authentication                    |
+| Flask-Mail      | Sending email notifications            |
+| Flask-Migrate   | Database migrations                    |
+| Bootstrap       | Frontend styling                       |
+| SQLite/PostgreSQL | Persistent database                   |
 
 ---
 
-## Setup & Run Instructions
+## Installation
 
-### 1. Clone the repository
+### 1. Clone repo
 
 ```bash
 git clone git@github.com:ninihuynh/skincare-inventory-web.git
@@ -43,32 +54,51 @@ source venv/bin/activate   # On Windows use `venv\Scripts\activate`
 ### 3. Install required packages
 
 ```bash
-pip install Flask
+pip install -r requirements.txt
 ```
 
-### 4. Run the app
+### 4. Setup environment variables
 
 ```bash
-python app.py
+Create .env file:
+FLASK_SECRET_KEY=your_secret_key_here
+DATABASE_URL=sqlite:///site.db
+MAIL_SERVER=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=your_email@example.com
+MAIL_PASSWORD=your_email_password
 ```
 
-### 5. Open the browser and go to
+### 5. Initialize database
+
+```bash
+flask db upgrade
+```
+
+### 6. Run the app
+
+```bash
+flask run
+```
+
+### 7. Open the browser
 
 ```bash
 http://127.0.0.1:5000/
 ```
 
+
 ---
 
 ## How to Use
 
-- On the homepage, see the list of skincare products and their current stock
+- Register an account and login
+- Add skincare products with stock info
+- Purchase products and watch inventory update
+- Receive email alerts when stock runs low
+- View purchase logs and reports
 
-- Click the "Purchase" button to buy one unit of a product
 
-- If stock is low (3 or less), you will see a warning message
-
-- Go to /log page (click the link or type in browser) to view purchase history
 
 
 
