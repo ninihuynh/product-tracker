@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block page_title %}Low Stock Alerts{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            Products Requiring Attention
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Current Stock</th>
+                        <th>Min Level</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{% if product.current_stock == 0 %}table-danger{% else %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                        </td>
+                        <td>{{ product.brand }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ product.category }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if product.current_stock == 0 %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ product.current_stock }}
+                            </span>
+                        </td>
+                        <td>{{ product.min_stock_level }}</td>
+                        <td>
+                            {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('add_purchase') }}?product_id={{ product.id }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-shopping-cart"></i> Restock
+                                </a>
+                                <a href="{{ url_for('edit_product', id=product.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+            <h5>All Products Well Stocked!</h5>
+            <p>No products are currently below their minimum stock levels.</p>
+            <a href="{{ url_for('products') }}" class="btn btn-outline-primary">View All Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
